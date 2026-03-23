@@ -481,11 +481,16 @@ class XVLAPolicy(PreTrainedPolicy):
         logging.info(f"Loading checkpoint from {model_file}")
         # step 3: load state dict
         state_dict = safetensors.torch.load_file(model_file)
+        # Add "model." prefix if pretrained weights lack it (standalone repo format)
+        sample_key = next(iter(state_dict))
+        if not sample_key.startswith("model."):
+            state_dict = {"model." + k: v for k, v in state_dict.items()}
         encoder_key = "model.vlm.language_model.model.encoder.embed_tokens.weight"
         shared_key = "model.vlm.language_model.model.shared.weight"
-        if encoder_key in state_dict:
+        if encoder_key in state_dict and shared_key not in state_dict:
             state_dict[shared_key] = state_dict[encoder_key]
-            # or deepcopy
+        elif shared_key in state_dict and encoder_key not in state_dict:
+            state_dict[encoder_key] = state_dict[shared_key]
         # step 4: load into instance
         instance.load_state_dict(state_dict, strict=True)
         logging.info("Loaded XVLA checkpoint")
