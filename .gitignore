@@ -177,3 +177,6 @@ outputs/
 *.urdf
 *.xml
 *.part
+src/datasets/
+src/outputs/
+src/pretrained/
